@@ -38,8 +38,15 @@ class TestCompanyIcon(HttpCase):
     def test_wide_company_logo_becomes_a_white_square(self):
         self.company.logo = _png(400, 100, (200, 0, 0))
         manifest = self.url_open("/web/manifest.webmanifest").json()
-        self.assertEqual([i["src"] for i in manifest["icons"]],
-                         ["/web/company_icon/192.png", "/web/company_icon/512.png"])
+        sources = [i["src"] for i in manifest["icons"]]
+        self.assertTrue(sources[0].startswith("/web/company_icon/192.png?v="), sources)
+        self.assertTrue(sources[1].startswith("/web/company_icon/512.png?v="), sources)
+        self.assertEqual(self.url_open("/web/manifest.webmanifest").headers["Cache-Control"], "no-cache")
+        # a new image changes the manifest, so that installed apps update
+        self.company.logo = _png(400, 100, (0, 200, 0))
+        again = self.url_open("/web/manifest.webmanifest").json()
+        self.assertNotEqual(again["icons"][0]["src"], sources[0])
+        self.company.logo = _png(400, 100, (200, 0, 0))
         res = self.url_open("/web/company_icon/192.png")
         self.assertEqual(res.headers["Content-Type"], "image/png")
         img = Image.open(io.BytesIO(res.content))
@@ -83,3 +90,7 @@ class TestCompanyIcon(HttpCase):
         })
         self.authenticate("color_test_user", "color-test-Pass-42")
         self.assertIn('<meta name="theme-color" content="#123456"', self.url_open("/odoo").text)
+
+    def test_offline_page_shows_the_icon(self):
+        self.company.logo = _png(400, 100, (200, 0, 0))
+        self.assertIn("data:image/png;base64", self.url_open("/odoo/offline").text)

@@ -1,6 +1,7 @@
 # Copyright 2026 Biricon IT Services GmbH
 # License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl).
 import base64
+import hashlib
 import io
 
 from PIL import Image
@@ -52,14 +53,37 @@ class WebManifest(webmanifest.WebManifest):
         color = request.env.company.sudo().primary_color
         if color:
             manifest["theme_color"] = manifest["background_color"] = color
-        if self._get_app_icon_source():
+        source = self._get_app_icon_source()
+        if source:
+            # the version makes the manifest change whenever the image changes, which is what makes
+            # browsers update an installed web app (the same way as for a changed app name)
+            version = hashlib.sha1(source).hexdigest()[:10]
             manifest["icons"] = [{
-                "src": f"/web/company_icon/{size}.png",
+                "src": f"/web/company_icon/{size}.png?v={version}",
                 "sizes": f"{size}x{size}",
                 "type": "image/png",
                 "purpose": "any",
             } for size in (192, 512)]
         return manifest
+
+    @http.route("/web/manifest.webmanifest", type="http", auth="public", methods=["GET"], readonly=True)
+    def webmanifest(self):
+        response = super().webmanifest()
+        response.headers["Cache-Control"] = "no-cache"  # always revalidate: changes reach installed apps at once
+        return response
+
+    @http.route("/odoo/offline", type="http", auth="public", methods=["GET"], readonly=True)
+    def offline(self):
+        source = self._get_app_icon_source()
+        png = None
+        if source:
+            try:
+                png = square_png(source, 192)
+            except Exception:  # noqa: BLE001
+                png = None
+        if not png:
+            return super().offline()
+        return request.render("web.webclient_offline", {"odoo_icon": base64.b64encode(png)})
 
     @http.route("/web/company_icon/<int:size>.png", type="http", auth="public", methods=["GET"], readonly=True)
     def company_icon(self, size):

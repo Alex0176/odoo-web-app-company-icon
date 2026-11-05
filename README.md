@@ -21,8 +21,10 @@ logo exists, the Odoo icons stay. Uninstalling the module restores the Odoo icon
 The color of the app (manifest `theme_color` / `background_color` and the `theme-color` meta tag of the backend) is the
 primary color of the company, if one is set.
 
-Phones and PCs that already installed the web app take over a changed icon only after some time, often only after
-reinstalling the app. The module contains Python code: restart Odoo after installing it.
+Installed web apps update like after a changed app name: the icon URLs in the manifest carry a version of the image,
+so the manifest changes whenever the logo, favicon or company color changes, and it is never cached. Browsers check it
+when the app is started (Chrome about once a day, Android updates the app silently). iOS keeps the icon of the day of
+installation. The module contains Python code: restart Odoo after installing it.
 
 ## Requirements
 
