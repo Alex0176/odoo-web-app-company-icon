@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="webclient_bootstrap_company_icon" inherit_id="web.webclient_bootstrap">
+        <xpath expr="//link[@rel='apple-touch-icon']" position="attributes">
+            <attribute name="href">/web/company_icon/180.png</attribute>
+        </xpath>
+        <xpath expr="//meta[@name='theme-color']" position="attributes">
+            <attribute name="t-att-content">request.env.company.sudo().primary_color or '#71639e'</attribute>
+        </xpath>
+        <xpath expr="//t[@t-call='web.layout']" position="inside">
+            <t t-set="x_icon" t-value="'/web/company_icon/32.png'"/>
+        </xpath>
+    </template>
+</odoo>
