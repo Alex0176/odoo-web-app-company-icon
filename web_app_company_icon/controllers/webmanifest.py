@@ -86,7 +86,7 @@ class WebManifest(webmanifest.WebManifest):
         return request.render("web.webclient_offline", {"odoo_icon": base64.b64encode(png)})
 
     @http.route("/web/company_icon/<int:size>.png", type="http", auth="public", methods=["GET"], readonly=True)
-    def company_icon(self, size):
+    def company_icon(self, size, **kwargs):
         if size not in STOCK_ICONS:
             return request.not_found()
         source = self._get_app_icon_source()
